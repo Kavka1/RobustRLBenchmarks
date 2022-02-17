@@ -1,6 +1,7 @@
 from copy import copy
 from typing import Dict, List, Tuple
 import numpy as np
+import yaml
 import datetime
 import torch
 import torch.nn as nn
@@ -9,7 +10,6 @@ import torch.optim as optim
 from torch.distributions.multivariate_normal import MultivariateNormal
 from torch.utils.tensorboard.writer import SummaryWriter
 from RobustRLBenchmarks.mujoco.domainrandom.dr_halfcheetah import DRHalfcheetah
-from multiprocessing import Process
 
 
 class GaussianPolicy(nn.Module):
@@ -165,7 +165,7 @@ class PPOAgent(object):
             self.optimizer_pi.step()
 
             values = self.V(o).squeeze(dim=-1)
-            loss_v = F.mse_loss(values, returns)
+            loss_v = 0.5 * F.mse_loss(values, returns)
             self.optimizer_v.zero_grad()
             loss_v.backward()
             self.optimizer_v.step()
@@ -204,27 +204,27 @@ config = {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.8, 1.2, 5).tolist(),
+        'mass_coeff_sweep': np.linspace(0.8, 1.2, 4).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 1, 0, 0, 1],
+        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
         'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     'test_env_config': {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
+        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 1, 0, 0, 1],
+        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
         'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     'lr': 5e-4,
     'gamma': 0.998,
     'lamda': 0.995,
-    'action_var': 0.2,
+    'action_var': 0.3,
     'ratio_clip': 0.2,
     'temperature_coef': 0.01,
-    'num_update': 50,
+    'num_update': 60,
     'device': 'cuda',
     'result_path': '/home/xukang/GitRepo/RobustRLBenchmarks/test/results/PPO_Mujoco_Halfcheetah_DR/',
     'max_episode': 10000,
@@ -238,18 +238,18 @@ config_oral.update({
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
+        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 1, 0, 0, 1],
+        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
         'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     'test_env_config': {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
+        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 1, 0, 0, 1],
+        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
         'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
 })
@@ -260,18 +260,18 @@ config_baseline.update({
         'fix_system': True,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [1, 1, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.8, 1.5, 10).tolist(),
+        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 1, 0, 0, 1],
+        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
         'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     'test_env_config': {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
-        'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
+        'fix_fric_coeff': [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 1, 0, 0, 1],
+        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
         'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
 })
@@ -293,7 +293,12 @@ def train(config: Dict, exp_name: str) -> None:
         'max_episode_steps': train_env.episode_length,
     }
     agent = PPOAgent(config, env_params)
-    logger = SummaryWriter(log_dir=config['result_path'] + '{}_{}'.format(exp_name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
+    config.update({
+        'result_path': config['result_path'] + '{}_{}/'.format(exp_name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+    })
+    logger = SummaryWriter(log_dir=config['result_path'])
+    with open(config['result_path'] + 'config.yaml', 'w', encoding='utf-8') as f:
+        yaml.dump(config, f, indent=2)
 
     total_steps = 0
     total_episodes = 0
@@ -324,9 +329,9 @@ def train(config: Dict, exp_name: str) -> None:
 
 
 if __name__ == '__main__':
-    train(config, 'main')
+    #train(config, 'main')
     #train(config_oral, 'oral')
-    #train(config_baseline, 'baseline')
+    train(config_baseline, 'baseline')
     #Process(target=train, args=(config, 'main')).start()
     #Process(target=train, args=(config_oral, 'oral')).start()
     #Process(target=train, args=(config_baseline, 'baseline')).start()
