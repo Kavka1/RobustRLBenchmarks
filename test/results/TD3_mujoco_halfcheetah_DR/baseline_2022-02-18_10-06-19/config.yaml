@@ -1,0 +1,135 @@
+batch_size: 256
+buffer_size: 1000000.0
+device: cuda
+evaluation_episode: 10
+evaluation_interval: 50
+gamma: 0.998
+lr: 0.0005
+max_episode: 10000
+noise_clip: 0.2
+noise_std: 0.4
+result_path: /home/xukang/GitRepo/RobustRLBenchmarks/test/results/TD3_mujoco_halfcheetah_DR/baseline_2022-02-18_10-06-19/
+seed: 10
+tau: 0.001
+test_env_config:
+  fix_fric_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_mass_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_system: false
+  fric_change_geom:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  fric_coeff_sweep:
+  - 0.5
+  - 0.6111111111111112
+  - 0.7222222222222222
+  - 0.8333333333333333
+  - 0.9444444444444444
+  - 1.0555555555555556
+  - 1.1666666666666665
+  - 1.2777777777777777
+  - 1.3888888888888888
+  - 1.5
+  mass_change_body:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  mass_coeff_sweep:
+  - 0.8
+  - 0.8571428571428572
+  - 0.9142857142857143
+  - 0.9714285714285714
+  - 1.0285714285714285
+  - 1.0857142857142856
+  - 1.1428571428571428
+  - 1.2
+train_begin_episode: 10
+train_delay: 2
+train_env_config:
+  fix_fric_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_mass_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_system: true
+  fric_change_geom:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  fric_coeff_sweep:
+  - 0.5
+  - 0.6111111111111112
+  - 0.7222222222222222
+  - 0.8333333333333333
+  - 0.9444444444444444
+  - 1.0555555555555556
+  - 1.1666666666666665
+  - 1.2777777777777777
+  - 1.3888888888888888
+  - 1.5
+  mass_change_body:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  mass_coeff_sweep:
+  - 0.8
+  - 0.8571428571428572
+  - 0.9142857142857143
+  - 0.9714285714285714
+  - 1.0285714285714285
+  - 1.0857142857142856
+  - 1.1428571428571428
+  - 1.2

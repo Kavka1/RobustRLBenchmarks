@@ -1,30 +1,26 @@
-from typing import Dict, List, Tuple
-import numpy as np
+from typing import Dict
 import random
-import gym
 from copy import copy
+import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env
-from torch import rand
 
 
-# Example
-# body_names: 'world', 'torso', 'bthigh', 'bshin', 'bfoot', 'fthigh', 'fshin', 'ffoot'
-# geom_names: 'floor', 'torso', 'head', 'bthigh', 'bshin', 'bfoot', 'fthigh', 'fshin', 'ffoot'
+# body_names: 'world', 'cart', 'pole'
+# geom_names: 'rail', 'cart', 'cpole'
 CONFIG = {
-    'fix_system': False,
-    'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
-    'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
+    'fix_system': True,
+    'fix_mass_coeff': [1, 1, 1],
+    'fix_fric_coeff': [1, 1, 1],
     'mass_coeff_sweep': np.linspace(0.2, 1.5, 10).tolist(),
     'fric_coeff_sweep': np.linspace(0.1, 1.2, 10).tolist(),
-    'mass_change_body': [0, 0, 0, 0, 1, 1, 1, 1],
-    'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    'mass_change_body': [0, 1, 1],
+    'fric_change_geom': [0, 1, 1]
 }
 
 
-class DRHalfcheetahEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+class DRInvertedPendulumEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self, config: Dict, episode_length: int = 1000):
-
         self.fix_system = config['fix_system']  # whether fix the mass and friction coefficients
         self.fix_mass_coeff = config['fix_mass_coeff']  # [1. ] * 8 for fix system
         self.fix_fric_coeff = config['fix_fric_coeff']  # [1. ] * 9 for fix system
@@ -35,35 +31,24 @@ class DRHalfcheetahEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.fric_change_geom = config['fric_change_geom']    # (9,)
 
         self.episode_length = episode_length
-        self.episode_step = 0
         self.episode_count = 0
+        self.episode_step = 0
 
-        mujoco_env.MujocoEnv.__init__(self, "half_cheetah.xml", 5)
         utils.EzPickle.__init__(self)
+        mujoco_env.MujocoEnv.__init__(self, "inverted_pendulum.xml", 2)
 
         self.initial_body_mass = copy(self.model.body_mass)
         self.initial_geom_fraction = copy(self.model.geom_friction)
-        
-    def step(self, action):
+
+    def step(self, a):
         self.episode_step += 1
 
-        xposbefore = self.sim.data.qpos[0]
-        self.do_simulation(action, self.frame_skip)
-        xposafter = self.sim.data.qpos[0]
+        reward = 1.0
+        self.do_simulation(a, self.frame_skip)
         ob = self._get_obs()
-        reward_ctrl = -0.1 * np.square(action).sum()
-        reward_run = (xposafter - xposbefore) / self.dt
-        reward = reward_ctrl + reward_run
-        done = self.episode_step >= self.episode_length
-        return ob, reward, done, dict(reward_run=reward_run, reward_ctrl=reward_ctrl)
-
-    def _get_obs(self):
-        return np.concatenate(
-            [
-                self.sim.data.qpos.flat[1:],
-                self.sim.data.qvel.flat,
-            ]
-        )
+        notdone = np.isfinite(ob).all() and (np.abs(ob[1]) <= 0.2)
+        done = (not notdone) or self.episode_step >= self.episode_length
+        return ob, reward, done, {}
 
     def resample_model_coefficients(self) -> None:
         if self.fix_system:
@@ -85,23 +70,32 @@ class DRHalfcheetahEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.episode_count += 1
 
         qpos = self.init_qpos + self.np_random.uniform(
-            low=-0.1, high=0.1, size=self.model.nq
+            size=self.model.nq, low=-0.01, high=0.01
         )
-        qvel = self.init_qvel + self.np_random.randn(self.model.nv) * 0.1
+        qvel = self.init_qvel + self.np_random.uniform(
+            size=self.model.nv, low=-0.01, high=0.01
+        )
         self.set_state(qpos, qvel)
 
-        self.resample_model_coefficients()  # random generate new combinations of coefficients
+        self.resample_model_coefficients()
 
         return self._get_obs()
 
+    def _get_obs(self):
+        return np.concatenate([self.sim.data.qpos, self.sim.data.qvel]).ravel()
+
     def viewer_setup(self):
-        self.viewer.cam.distance = self.model.stat.extent * 0.5
+        v = self.viewer
+        v.cam.trackbodyid = 0
+        v.cam.distance = self.model.stat.extent
+
 
 
 if __name__ == '__main__':
-    env = DRHalfcheetahEnv(CONFIG)
+    env = DRInvertedPendulumEnv(CONFIG)
     action_high = env.action_space.high
     action_low = env.action_space.low
+    model = env.model
 
     for _ in range(1000):
         obs = env.reset()

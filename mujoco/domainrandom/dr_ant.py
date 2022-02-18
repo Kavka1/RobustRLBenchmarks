@@ -1,30 +1,26 @@
-from typing import Dict, List, Tuple
-import numpy as np
-import random
-import gym
+from typing import Dict
 from copy import copy
+import random
+import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env
-from torch import rand
 
 
-# Example
-# body_names: 'world', 'torso', 'bthigh', 'bshin', 'bfoot', 'fthigh', 'fshin', 'ffoot'
-# geom_names: 'floor', 'torso', 'head', 'bthigh', 'bshin', 'bfoot', 'fthigh', 'fshin', 'ffoot'
+# body_names: 'world', 'torso', 'front_left_leg', 'aux_1', 'front_right_leg', 'aux_2', 'back_leg', 'aux_3', 'right_back_leg', 'aux_4', '', '', '', ''
+# geom_names: 'floor', 'torso_geom', 'aux_1_geom', 'left_leg_geom, 'left_ankle_geom', 'aux_2_geom', 'right_leg_geom, 'right_ankle_geom', 'aux_3_geom', 'back_leg_geom, 'third_ankle_geom', 'aux_4_geom', 'rightback_leg_geom, 'fourth_ankle_geom'
 CONFIG = {
-    'fix_system': False,
-    'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
-    'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
+    'fix_system': True,
+    'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    'fix_fric_coeff': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     'mass_coeff_sweep': np.linspace(0.2, 1.5, 10).tolist(),
     'fric_coeff_sweep': np.linspace(0.1, 1.2, 10).tolist(),
-    'mass_change_body': [0, 0, 0, 0, 1, 1, 1, 1],
-    'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    'mass_change_body': [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    'fric_change_geom': [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 }
 
 
-class DRHalfcheetahEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+class DRAntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self, config: Dict, episode_length: int = 1000):
-
         self.fix_system = config['fix_system']  # whether fix the mass and friction coefficients
         self.fix_mass_coeff = config['fix_mass_coeff']  # [1. ] * 8 for fix system
         self.fix_fric_coeff = config['fix_fric_coeff']  # [1. ] * 9 for fix system
@@ -38,30 +34,47 @@ class DRHalfcheetahEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.episode_step = 0
         self.episode_count = 0
 
-        mujoco_env.MujocoEnv.__init__(self, "half_cheetah.xml", 5)
+        mujoco_env.MujocoEnv.__init__(self, "ant.xml", 5)
         utils.EzPickle.__init__(self)
 
         self.initial_body_mass = copy(self.model.body_mass)
         self.initial_geom_fraction = copy(self.model.geom_friction)
-        
-    def step(self, action):
+
+    def step(self, a):
         self.episode_step += 1
 
-        xposbefore = self.sim.data.qpos[0]
-        self.do_simulation(action, self.frame_skip)
-        xposafter = self.sim.data.qpos[0]
+        xposbefore = self.get_body_com("torso")[0]
+        self.do_simulation(a, self.frame_skip)
+        xposafter = self.get_body_com("torso")[0]
+        forward_reward = (xposafter - xposbefore) / self.dt
+        ctrl_cost = 0.5 * np.square(a).sum()
+        contact_cost = (
+            0.5 * 1e-3 * np.sum(np.square(np.clip(self.sim.data.cfrc_ext, -1, 1)))
+        )
+        survive_reward = 1.0
+        reward = forward_reward - ctrl_cost - contact_cost + survive_reward
+        state = self.state_vector()
+        notdone = np.isfinite(state).all() and state[2] >= 0.2 and state[2] <= 1.0
+        done = (not notdone) or self.episode_step >= self.episode_length
         ob = self._get_obs()
-        reward_ctrl = -0.1 * np.square(action).sum()
-        reward_run = (xposafter - xposbefore) / self.dt
-        reward = reward_ctrl + reward_run
-        done = self.episode_step >= self.episode_length
-        return ob, reward, done, dict(reward_run=reward_run, reward_ctrl=reward_ctrl)
+        return (
+            ob,
+            reward,
+            done,
+            dict(
+                reward_forward=forward_reward,
+                reward_ctrl=-ctrl_cost,
+                reward_contact=-contact_cost,
+                reward_survive=survive_reward,
+            ),
+        )
 
     def _get_obs(self):
         return np.concatenate(
             [
-                self.sim.data.qpos.flat[1:],
+                self.sim.data.qpos.flat[2:],
                 self.sim.data.qvel.flat,
+                np.clip(self.sim.data.cfrc_ext, -1, 1).flat,
             ]
         )
 
@@ -81,16 +94,16 @@ class DRHalfcheetahEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             )[fric_change_idx]
 
     def reset_model(self):
-        self.episode_step = 0
         self.episode_count += 1
+        self.episode_step = 0
 
         qpos = self.init_qpos + self.np_random.uniform(
-            low=-0.1, high=0.1, size=self.model.nq
+            size=self.model.nq, low=-0.1, high=0.1
         )
         qvel = self.init_qvel + self.np_random.randn(self.model.nv) * 0.1
         self.set_state(qpos, qvel)
 
-        self.resample_model_coefficients()  # random generate new combinations of coefficients
+        self.resample_model_coefficients()
 
         return self._get_obs()
 
@@ -99,9 +112,11 @@ class DRHalfcheetahEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
 
 if __name__ == '__main__':
-    env = DRHalfcheetahEnv(CONFIG)
+    env = DRAntEnv(CONFIG)
     action_high = env.action_space.high
     action_low = env.action_space.low
+
+    model = env.model
 
     for _ in range(1000):
         obs = env.reset()

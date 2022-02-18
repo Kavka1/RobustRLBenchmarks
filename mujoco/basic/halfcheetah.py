@@ -1,5 +1,3 @@
-from statistics import mode
-from turtle import shape
 import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env

@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions.multivariate_normal import MultivariateNormal
 from torch.utils.tensorboard.writer import SummaryWriter
-from RobustRLBenchmarks.mujoco.domainrandom.dr_halfcheetah import DRHalfcheetah
+from RobustRLBenchmarks.mujoco.domainrandom.dr_halfcheetah import DRHalfcheetahEnv
 
 
 class GaussianPolicy(nn.Module):
@@ -175,7 +175,7 @@ class PPOAgent(object):
 
         return loss_pi.cpu().detach().item(), loss_v.cpu().detach().item()
 
-    def rollout(self, env: DRHalfcheetah, is_train: bool = True) -> Tuple[float, float, float, int]:
+    def rollout(self, env: DRHalfcheetahEnv, is_train: bool = True) -> Tuple[float, float, float, int]:
         cumulative_r = 0.
         total_step = 0.
         
@@ -278,8 +278,8 @@ config_baseline.update({
 
 
 def train(config: Dict, exp_name: str) -> None:
-    train_env = DRHalfcheetah(config['train_env_config'])
-    test_env = DRHalfcheetah(config['test_env_config'])
+    train_env = DRHalfcheetahEnv(config['train_env_config'])
+    test_env = DRHalfcheetahEnv(config['test_env_config'])
 
     np.random.seed(config['seed'])
     train_env.seed(config['seed'])

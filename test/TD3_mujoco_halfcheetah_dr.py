@@ -11,7 +11,7 @@ import torch.optim as optim
 import yaml
 import datetime
 from torch.utils.tensorboard.writer import SummaryWriter
-from RobustRLBenchmarks.mujoco.domainrandom.dr_halfcheetah import DRHalfcheetah
+from RobustRLBenchmarks.mujoco.domainrandom.dr_halfcheetah import DRHalfcheetahEnv
 
 
 class DeterministicPolicy(nn.Module):
@@ -165,12 +165,15 @@ class TD3Agent(object):
 
             self.log_loss_policy = loss_policy.cpu().detach().item()
 
+            soft_update(self.policy, self.policy_tar, self.tau)
+            soft_update(self.critic, self.critic_tar, self.tau)
+
         self.log_loss_q = loss_q.cpu().detach().item()
         self.update_count += 1
 
         return copy(self.log_loss_policy), copy(self.log_loss_q)
 
-    def evaluate(self, env: DRHalfcheetah, episode_num: int) -> float:
+    def evaluate(self, env: DRHalfcheetahEnv, episode_num: int) -> float:
         average_r = 0.
         for _ in range(episode_num):
             done = False
@@ -190,18 +193,18 @@ config = {
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
         'mass_coeff_sweep': np.linspace(0.8, 1.2, 4).tolist(),
-        'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
-        'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        'fric_coeff_sweep': np.linspace(0.8, 1.2, 4).tolist(),
+        'mass_change_body': [0, 0, 1, 1, 1, 1, 1, 1],
+        'fric_change_geom': [0, 0, 1, 1, 1, 1, 1, 1, 1]
     },
     'test_env_config': {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
+        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
-        'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        'mass_change_body': [0, 0, 1, 1, 1, 1, 1, 1],
+        'fric_change_geom': [0, 0, 1, 1, 1, 1, 1, 1, 1]
     },
     'lr': 5e-4,
     'gamma': 0.998,
@@ -213,7 +216,7 @@ config = {
     'noise_clip': 0.2,
     'device': 'cuda',
     'result_path': '/home/xukang/GitRepo/RobustRLBenchmarks/test/results/TD3_mujoco_halfcheetah_DR/',
-    'max_episode': 10000,
+    'max_episode': 2000,
     'evaluation_interval': 50,
     'evaluation_episode': 10,
     'train_begin_episode': 10
@@ -225,19 +228,19 @@ config_oral.update({
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
+        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
-        'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        'mass_change_body': [0, 0, 1, 1, 1, 1, 1, 1],
+        'fric_change_geom': [0, 0, 1, 1, 1, 1, 1, 1, 1]
     },
     'test_env_config': {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
+        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
-        'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        'mass_change_body': [0, 0, 1, 1, 1, 1, 1, 1],
+        'fric_change_geom': [0, 0, 1, 1, 1, 1, 1, 1, 1]
     },
 })
 
@@ -247,27 +250,27 @@ config_baseline.update({
         'fix_system': True,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
         'fix_fric_coeff': [1, 1, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
-        'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
-        'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        'mass_coeff_sweep': np.linspace(0.8, 1.2, 4).tolist(),
+        'fric_coeff_sweep': np.linspace(0.8, 1.2, 4).tolist(),
+        'mass_change_body': [0, 0, 1, 1, 1, 1, 1, 1],
+        'fric_change_geom': [0, 0, 1, 1, 1, 1, 1, 1, 1]
     },
     'test_env_config': {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1, 1, 1, 1],
-        'fix_fric_coeff': [1, 1, 1, 1, 1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.8, 1.2, 8).tolist(),
+        'fix_fric_coeff': [0.5, 0.5, 1, 1, 1, 1, 1, 1, 1],
+        'mass_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
         'fric_coeff_sweep': np.linspace(0.5, 1.5, 10).tolist(),
-        'mass_change_body': [0, 0, 0, 0, 0, 0, 0, 1],
-        'fric_change_geom': [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        'mass_change_body': [0, 0, 1, 1, 1, 1, 1, 1],
+        'fric_change_geom': [0, 0, 1, 1, 1, 1, 1, 1, 1]
     },
 })
 
 
 
 def train(config: Dict, exp_name: str) -> None:
-    train_env = DRHalfcheetah(config['train_env_config'])
-    test_env = DRHalfcheetah(config['test_env_config'])
+    train_env = DRHalfcheetahEnv(config['train_env_config'])
+    test_env = DRHalfcheetahEnv(config['test_env_config'])
 
     np.random.seed(config['seed'])
     train_env.seed(config['seed'])
@@ -282,7 +285,7 @@ def train(config: Dict, exp_name: str) -> None:
     }
     agent = TD3Agent(config, env_params)
     config.update({
-        'result_path': config['result_path'] + '{}_{}/'.format(exp_name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        'result_path': config['result_path'] + '{}_{}_{}/'.format(exp_name, config['seed'], datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     })
     logger = SummaryWriter(log_dir=config['result_path'])
     with open(config['result_path'] + 'config.yaml', 'w', encoding='utf-8') as f:
@@ -327,8 +330,5 @@ def train(config: Dict, exp_name: str) -> None:
 
 if __name__ == '__main__':
     #train(config, 'main')
-    #train(config_oral, 'oral')
-    train(config_baseline, 'baseline')
-    #Process(target=train, args=(config, 'main')).start()
-    #Process(target=train, args=(config_oral, 'oral')).start()
-    #Process(target=train, args=(config_baseline, 'baseline')).start()
+    train(config_oral, 'oral')
+    #train(config_baseline, 'baseline')
