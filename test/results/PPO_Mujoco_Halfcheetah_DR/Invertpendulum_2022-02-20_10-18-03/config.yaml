@@ -1,0 +1,131 @@
+action_var: 0.16
+batch_size: 256
+device: cuda
+evaluation_episode: 1
+evaluation_interval: 50
+exp_path: /home/xukang/GitRepo/RobustRLBenchmarks/test/results/PPO_Mujoco_Halfcheetah_DR/Invertpendulum_2022-02-20_10-18-03/
+gamma: 0.99
+lamda: 0.95
+lr: 0.0007
+max_episode: 10000
+num_update: 50
+ratio_clip: 0.2
+result_path: /home/xukang/GitRepo/RobustRLBenchmarks/test/results/PPO_Mujoco_Halfcheetah_DR/
+seed: 10
+temperature_coef: 0.01
+test_env_config:
+  fix_fric_coeff:
+  - 0.5
+  - 0.5
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_mass_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_system: false
+  fric_change_geom:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  fric_coeff_sweep:
+  - 0.5
+  - 0.6111111111111112
+  - 0.7222222222222222
+  - 0.8333333333333333
+  - 0.9444444444444444
+  - 1.0555555555555556
+  - 1.1666666666666665
+  - 1.2777777777777777
+  - 1.3888888888888888
+  - 1.5
+  mass_change_body:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  mass_coeff_sweep:
+  - 0.8
+  - 0.8571428571428572
+  - 0.9142857142857143
+  - 0.9714285714285714
+  - 1.0285714285714285
+  - 1.0857142857142856
+  - 1.1428571428571428
+  - 1.2
+train_env_config:
+  fix_fric_coeff:
+  - 0.5
+  - 0.5
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_mass_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_system: false
+  fric_change_geom:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  fric_coeff_sweep:
+  - 0.5
+  - 0.6111111111111112
+  - 0.7222222222222222
+  - 0.8333333333333333
+  - 0.9444444444444444
+  - 1.0555555555555556
+  - 1.1666666666666665
+  - 1.2777777777777777
+  - 1.3888888888888888
+  - 1.5
+  mass_change_body:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  mass_coeff_sweep:
+  - 0.8
+  - 0.9333333333333333
+  - 1.0666666666666667
+  - 1.2

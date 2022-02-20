@@ -1,0 +1,123 @@
+batch_size: 256
+buffer_size: 1000000.0
+device: cuda
+evaluation_episode: 10
+evaluation_interval: 50
+gamma: 0.998
+lr: 0.0005
+max_steps: 1200000
+noise_clip: 0.2
+noise_std: 0.4
+result_path: /home/xukang/GitRepo/RobustRLBenchmarks/test/results/TD3_mujoco_walker_DR/baseline_10_2022-02-18_23-06-12/baseline_20_2022-02-19_05-43-12/
+seed: 20
+tau: 0.001
+test_env_config:
+  fix_fric_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_mass_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_system: false
+  fric_change_geom:
+  - 0
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fric_coeff_sweep:
+  - 0.5
+  - 0.6111111111111112
+  - 0.7222222222222222
+  - 0.8333333333333333
+  - 0.9444444444444444
+  - 1.0555555555555556
+  - 1.1666666666666665
+  - 1.2777777777777777
+  - 1.3888888888888888
+  - 1.5
+  mass_change_body:
+  - 0
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  mass_coeff_sweep:
+  - 0.5
+  - 0.6111111111111112
+  - 0.7222222222222222
+  - 0.8333333333333333
+  - 0.9444444444444444
+  - 1.0555555555555556
+  - 1.1666666666666665
+  - 1.2777777777777777
+  - 1.3888888888888888
+  - 1.5
+train_begin_episode: 50
+train_delay: 2
+train_env_config:
+  fix_fric_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_mass_coeff:
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fix_system: true
+  fric_change_geom:
+  - 0
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  fric_coeff_sweep:
+  - 0.8
+  - 0.9333333333333333
+  - 1.0666666666666667
+  - 1.2
+  mass_change_body:
+  - 0
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  - 1
+  mass_coeff_sweep:
+  - 0.8
+  - 0.9333333333333333
+  - 1.0666666666666667
+  - 1.2

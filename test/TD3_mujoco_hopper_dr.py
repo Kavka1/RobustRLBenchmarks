@@ -24,8 +24,8 @@ CONFIG = {
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1],
         'fix_fric_coeff': [1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.5, 1.5, 6).tolist(),
-        'fric_coeff_sweep': np.linspace(0.5, 1.5, 6).tolist(),
+        'mass_coeff_sweep': np.linspace(0.4, 1.6, 10).tolist(),
+        'fric_coeff_sweep': np.linspace(0.4, 1.6, 10).tolist(),
         'mass_change_body': [0, 1, 1, 1, 1],
         'fric_change_geom': [0, 1, 1, 1, 1]
     },
@@ -52,8 +52,8 @@ CONFIG_ORAL.update({
         'fix_system': False,
         'fix_mass_coeff': [1, 1, 1, 1, 1],
         'fix_fric_coeff': [1, 1, 1, 1, 1],
-        'mass_coeff_sweep': np.linspace(0.5, 1.5, 6).tolist(),
-        'fric_coeff_sweep': np.linspace(0.5, 1.5, 6).tolist(),
+        'mass_coeff_sweep': np.linspace(0.4, 1.6, 10).tolist(),
+        'fric_coeff_sweep': np.linspace(0.4, 1.6, 10).tolist(),
         'mass_change_body': [0, 1, 1, 1, 1],
         'fric_change_geom': [0, 1, 1, 1, 1]
     },
@@ -90,10 +90,10 @@ def train(config: Dict, exp_name: str) -> None:
     }
     agent = TD3Agent(config, env_params)
     config.update({
-        'result_path': config['result_path'] + '{}_{}_{}/'.format(exp_name, config['seed'], datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        'exp_path': config['result_path'] + '{}_{}_{}/'.format(exp_name, config['seed'], datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     })
-    logger = SummaryWriter(log_dir=config['result_path'])
-    with open(config['result_path'] + 'config.yaml', 'w', encoding='utf-8') as f:
+    logger = SummaryWriter(log_dir=config['exp_path'])
+    with open(config['exp_path'] + 'config.yaml', 'w', encoding='utf-8') as f:
         yaml.dump(config, f, indent=2)
 
     total_steps = 0
@@ -146,7 +146,7 @@ TRAIN_SETTING = {
 
 
 if __name__ == '__main__':
-    config, exp_name = TRAIN_SETTING['baseline']
+    config, exp_name = TRAIN_SETTING['oral']
     for seed in [10, 20, 30]:
         config.update({'seed': seed})
         train(config, exp_name)

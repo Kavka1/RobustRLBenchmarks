@@ -90,10 +90,10 @@ def train(config: Dict, exp_name: str) -> None:
     }
     agent = TD3Agent(config, env_params)
     config.update({
-        'result_path': config['result_path'] + '{}_{}_{}/'.format(exp_name, config['seed'], datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        'exp_path': config['result_path'] + '{}_{}_{}/'.format(exp_name, config['seed'], datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     })
-    logger = SummaryWriter(log_dir=config['result_path'])
-    with open(config['result_path'] + 'config.yaml', 'w', encoding='utf-8') as f:
+    logger = SummaryWriter(log_dir=config['exp_path'])
+    with open(config['exp_path'] + 'config.yaml', 'w', encoding='utf-8') as f:
         yaml.dump(config, f, indent=2)
 
     total_steps = 0

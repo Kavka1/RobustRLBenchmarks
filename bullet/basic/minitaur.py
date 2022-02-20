@@ -68,7 +68,8 @@ class MinitaurBulletEnv(gym.Env):
       on_rack=False,
       render=False,
       kd_for_pd_controllers=0.3,
-      env_randomizer=minitaur_env_randomizer.MinitaurEnvRandomizer()):
+      env_randomizer=minitaur_env_randomizer.MinitaurEnvRandomizer(),
+      max_episode_length=2500):
     """Initialize the minitaur gym environment.
 
     Args:
@@ -159,6 +160,8 @@ class MinitaurBulletEnv(gym.Env):
     self.observation_space = spaces.Box(observation_low, observation_high, dtype=np.float32)
     self.viewer = None
     self._hard_reset = hard_reset  # This assignment need to be after reset()
+
+    self.max_episode_length = max_episode_length
 
   def set_env_randomizer(self, env_randomizer):
     self._env_randomizer = env_randomizer
@@ -351,7 +354,7 @@ class MinitaurBulletEnv(gym.Env):
   def _termination(self):
     position = self.minitaur.GetBasePosition()
     distance = math.sqrt(position[0]**2 + position[1]**2)
-    return self.is_fallen() or distance > self._distance_limit
+    return self.is_fallen() or distance > self._distance_limit or self._env_step_counter >= self.max_episode_length
 
   def _reward(self):
     current_base_position = self.minitaur.GetBasePosition()
@@ -393,11 +396,22 @@ class MinitaurBulletEnv(gym.Env):
 if __name__ == '__main__':
     env = MinitaurBulletEnv(render=True)
     a_high, a_low = env.action_space.high[0], env.action_space.low[0]
+    
     for i in range(100):
+        episode_step = 0
+        episode_reward = 0
+    
         done = False
         obs = env.reset()
         while not done:
-            #env.render()
-            a = np.random.randn(*env.action_space.shape)
-            a = np.clip(a, a_low, a_high)
-            obs, r, done, info = env.step(a)
+          #env.render()
+          a = np.random.randn(*env.action_space.shape)
+          a = np.clip(a, a_low, a_high)
+          obs, r, done, info = env.step(a)
+
+          episode_step += 1
+          episode_reward += r
+        
+        position = env.minitaur.GetBasePosition()
+        distance = math.sqrt(position[0]**2 + position[1]**2)
+        print(f'Episode: {i} EpisodeStep: {episode_step}  Distance: {distance}  EpisodeReward: {episode_reward}')
