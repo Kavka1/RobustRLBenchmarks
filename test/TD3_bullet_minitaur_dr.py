@@ -126,6 +126,6 @@ TRAIN_SETTING = {
 
 if __name__ == '__main__':
     config, exp_name = TRAIN_SETTING['baseline']
-    for seed in [20, 30]:
+    for seed in [40, 50]:
         config.update({'seed': seed})
         train(config, exp_name)

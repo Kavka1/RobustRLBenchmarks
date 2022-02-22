@@ -1,0 +1,31 @@
+batch_size: 256
+buffer_size: 1000000.0
+device: cuda
+evaluation_episode: 15
+evaluation_interval: 50
+exp_path: /home/xukang/GitRepo/RobustRLBenchmarks/test/results/TD3_bullet_Minitaur_DR/baseline_40_2022-02-21_09-34-12/
+gamma: 0.998
+lr: 0.0005
+max_steps: 1000000
+noise_clip: 0.2
+noise_std: 0.4
+result_path: /home/xukang/GitRepo/RobustRLBenchmarks/test/results/TD3_bullet_Minitaur_DR/
+seed: 40
+tau: 0.001
+test_env_randomizer: !!python/object:pybullet_envs.bullet.minitaur_env_randomizer.MinitaurEnvRandomizer
+  _battery_voltage_range: !!python/tuple
+  - 12.8
+  - 18.8
+  _minitaur_base_mass_err_range: !!python/tuple
+  - -0.2
+  - 0.5
+  _minitaur_leg_mass_err_range: !!python/tuple
+  - -0.2
+  - 0.2
+  _motor_viscous_damping_range: !!python/tuple
+  - 0
+  - 0.01
+train_begin_episode: 5
+train_delay: 2
+train_env_randomizer: null
+train_score_log_interval: 10

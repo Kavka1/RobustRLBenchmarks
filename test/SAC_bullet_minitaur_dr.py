@@ -5,8 +5,6 @@ from multiprocessing.spawn import import_main_path
 from operator import imod
 from time import sleep
 from typing import Dict, List, Tuple
-from aem import con
-import conda
 from matplotlib.pyplot import cla
 import numpy as np
 import yaml
@@ -45,7 +43,6 @@ class GaussianPolicy(nn.Module):
         std = torch.exp(log_std)
         dist = Normal(mean, std)
         action = torch.tanh(dist.sample())
-        action = action.cpu().detach().numpy()
         return action
 
     def __call__(self, obs: torch.tensor) -> Tuple[torch.tensor, torch.tensor]:
@@ -58,7 +55,7 @@ class GaussianPolicy(nn.Module):
         arctah_action = dist.rsample()  # reparametric trick for gradient flow
         action = torch.tanh(arctah_action)
         log_prob = dist.log_prob(arctah_action) - torch.log(1 - action**2 + 1e-6)
-        log_prob = log_prob.sum(dim=-1, keep_dim=True)
+        log_prob = log_prob.sum(dim=-1, keepdim=True)
 
         return action, log_prob
 
@@ -129,10 +126,10 @@ class SACAgent(object):
         hard_update(self.critic, self.critic_target)
 
         self.update_count = 0
-        self.log_loss_pi = 0.
-        self.log_loss_q = 0.
-        self.log_loss_alpha = 0.
-        self.log_alpha = 0.
+        self.logger_loss_pi = 0.
+        self.logger_loss_q = 0.
+        self.logger_loss_alpha = 0.
+        self.logger_alpha = 0.
 
     def selection_action(self, obs: np.array) -> np.array:
         obs = torch.from_numpy(obs).float().to(self.device)
@@ -152,12 +149,12 @@ class SACAgent(object):
         obs_ = torch.from_numpy(obs_).float().to(self.device)
 
         with torch.no_grad():
-            next_a_target, _ = self.policy_target(obs_)
+            next_a_target, next_a_logprob = self.policy_target(obs_)
             noise = torch.randn_like(next_a_target).float().to(self.device)
             next_a_target = next_a_target + torch.clamp(noise, -self.noise_clip, self.noise_clip)
             next_q1_target, next_q2_target = self.critic_target(obs_, next_a_target)
             next_q = torch.min(next_q1_target, next_q2_target)
-            update_target_q = r + (1 - done) * self.gamma * next_q
+            update_target_q = r + (1 - done) * self.gamma * (next_q - self.alpha * next_a_logprob)
         pred_q1, pred_q2 = self.critic(obs, a)
         loss_q = F.mse_loss(pred_q1, update_target_q) + F.mse_loss(pred_q2, update_target_q)
         self.optimizer_q.zero_grad()
@@ -171,6 +168,7 @@ class SACAgent(object):
             loss_policy.backward()
             self.optimizer_pi.step()
 
+            log_prob = torch.tensor(log_prob.tolist(), requires_grad=False, device=self.device)
             loss_alpha = (- torch.exp(self.log_alpha) * (log_prob + self.target_entropy)).mean()
             self.optimizer_alpha.zero_grad()
             loss_alpha.backward()
@@ -181,14 +179,14 @@ class SACAgent(object):
             soft_update(self.policy, self.policy_target, self.tau)
             soft_update(self.critic, self.critic_target, self.tau)
 
-            self.log_loss_pi = loss_policy.item()
-            self.log_loss_alpha = loss_alpha.item()
-            self.log_alpha = self.alpha.item()
+            self.logger_loss_pi = loss_policy.item()
+            self.logger_loss_alpha = loss_alpha.item()
+            self.logger_alpha = self.alpha.item()
 
-        self.log_loss_q = loss_q.item()
+        self.logger_loss_q = loss_q.item()
         self.update_count += 1
 
-        return self.log_loss_pi, self.log_loss_q, self.log_loss_alpha, self.log_alpha
+        return self.logger_loss_pi, self.logger_loss_q, self.logger_loss_alpha, self.logger_alpha
 
     def evaluation(self, env, episode_num: int) -> Tuple[float, int]:
         cumulative_r = 0
@@ -234,7 +232,7 @@ CONFIG = {
     'train_score_log_interval': 10,
     'evaluation_interval': 50,
     'evaluation_episode': 15,
-    'train_start_steps': 1000
+    'start_train_steps': 1000
 }
 
 
@@ -297,13 +295,15 @@ def train(config: Dict, exp_name: str) -> None:
             logger.add_scalar('Indicator/train_score_episode', train_score, total_episodes)
             logger.add_scalar('Loss/loss_pi', loss_pi, total_steps)
             logger.add_scalar('Loss/loss_q', loss_q, total_steps)
+            logger.add_scalar('Loss/loss_alpha', loss_alpha, total_steps)
+            logger.add_scalar('Loss/alpha', alpha, total_steps)
             cumulative_r = 0
 
         if total_episodes % config['evaluation_interval'] == 0:
             evaluation_score, evaluation_steps = agent.evaluation(test_env, config['evaluation_episode'])
             logger.add_scalar('Indicator/evaluation_score', evaluation_score, total_steps)
 
-        print(f'----Episode: {total_episodes} Episode_steps: {steps} Total_steps: {total_steps} train_score: {train_score}, test_score: {evaluation_score}-----')
+        print(f'----Episode: {total_episodes} Episode_steps: {episode_steps} Total_steps: {total_steps} train_score: {train_score}, test_score: {evaluation_score}-----')
 
 
 
@@ -314,7 +314,7 @@ train_setting = {
 
 
 if __name__ == '__main__':
-    config, exp_name = train_setting('baseline')
+    config, exp_name = train_setting['baseline']
     for seed in [10, 20, 30, 40, 50]:
         config.update({'seed': seed})
         train(config, exp_name)
