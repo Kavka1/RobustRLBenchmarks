@@ -41,7 +41,7 @@ def plot_best_performance() -> None:
 
     plt.grid()
     plt.xlabel('Different Train Setting')
-    plt.ylabel('Evaluation Score')
+    plt.ylabel(f'Evaluation Score')
     plt.title('Evaluation Score in Different Training Setting')
 
     plt.show()

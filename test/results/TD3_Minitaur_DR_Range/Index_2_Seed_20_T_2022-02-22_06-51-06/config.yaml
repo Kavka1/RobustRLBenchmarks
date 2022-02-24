@@ -1,0 +1,17 @@
+batch_size: 256
+buffer_size: 1000000.0
+device: cuda
+evaluation_episode: 15
+evaluation_interval: 50
+exp_path: /data/xukang/Project/RobustRLBenchmarks/test/results/TD3_Minitaur_DR_Range/Index_2_Seed_20_T_2022-02-22_06-51-06/
+gamma: 0.998
+lr: 0.0005
+max_steps: 1500000
+noise_clip: 0.2
+noise_std: 0.4
+result_path: /data/xukang/Project/RobustRLBenchmarks/test/results/TD3_Minitaur_DR_Range/
+seed: 20
+tau: 0.001
+train_begin_episode: 20
+train_delay: 2
+train_score_log_interval: 10
